@@ -5,6 +5,8 @@ import {
   moveDown,
   toId,
   fromId,
+  getTail,
+  getHead,
 } from "./utils.js";
 // constants
 const NUM_ROWS = 20;
@@ -71,7 +73,6 @@ function getNewFood() {
 
 function initCanvas() {
   const canvas = document.getElementById("canvas");
-  canvas.style.border = "1px solid black";
   for (let i = 0; i < NUM_ROWS; i++) {
     const row = document.createElement("div");
     row.style.display = "flex";
@@ -109,6 +110,13 @@ function drawSnakeAndFood() {
       if (currentSnake.has(id)) {
         cell.style.background = "green";
         cell.style.borderRadius = "20%";
+        cell.style.transition = "background 0.2s";
+        // add eyes
+        const head = getHead(currentSnake);
+        // add eyes to head
+        const headCell = cellMap.get(head) ?? document.getElementById(head);
+        headCell.style.background = "black";
+        headCell.style.borderRadius = "50%";
       } else {
         cell.style.background = "white";
       }
@@ -153,7 +161,7 @@ function step() {
     break;
   }
   currentDir = nextDir;
-  const head = [...currentSnake][currentSnake.size - 1];
+  const head = getHead(currentSnake);
   const nextHead = currentDir(fromId(head));
   const nextId = toId(...nextHead);
   if (
@@ -214,6 +222,10 @@ function restartGame() {
   currentSnake = new Set(INIT_IDS);
   currentDir = moveRight;
   currentFood = getFood();
+  interval = SLOWEST_INTERVAL;
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
   score = 0;
   updateScore(score);
   drawSnakeAndFood();

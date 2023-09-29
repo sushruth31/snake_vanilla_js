@@ -11,3 +11,11 @@ export function toId(...args) {
 export function fromId(id) {
   return id.split("-").map((i) => parseInt(i));
 }
+
+export function getTail(snake) {
+  return [...snake][0];
+}
+
+export function getHead(snake) {
+  return [...snake][snake.size - 1];
+}
