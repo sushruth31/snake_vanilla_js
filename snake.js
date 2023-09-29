@@ -1,6 +1,17 @@
+import {
+  moveRight,
+  moveLeft,
+  moveUp,
+  moveDown,
+  toId,
+  fromId,
+} from "./utils.js";
 // constants
 const NUM_ROWS = 20;
 const NUM_COLS = 20;
+const FASTEST_INTERVAL = 100;
+const SLOWEST_INTERVAL = 400;
+const INCREMENT = 40;
 const CELL = 30;
 const INIT_IDS = [0, 1, 2].map((i) => `${0}-${i}`);
 const scoreTxt = document.getElementById("score");
@@ -9,21 +20,30 @@ const cellMap = new Map();
 const modal = document.getElementById("gameovermodal");
 const scoreEls = document.getElementsByClassName("score");
 
-// direction fns
-const moveRight = ([row, col]) => [row, col + 1];
-const moveLeft = ([row, col]) => [row, col - 1];
-const moveUp = ([row, col]) => [row - 1, col];
-const moveDown = ([row, col]) => [row + 1, col];
-
 // game state
 let intervalId = null;
 let score = 0;
 // snake type is a set of cell ids
 let currentSnake = new Set(INIT_IDS);
-let interval = 400;
+let interval = SLOWEST_INTERVAL;
 let currentFood = getFood();
 let currentDir = moveRight;
 const dirQueue = [moveRight];
+let currentVacant = new Set();
+
+// updates the current vacant set
+// this is to set determine if there is an available spot for food
+function updateVacant() {
+  currentVacant = new Set();
+  for (let i = 0; i < NUM_ROWS; i++) {
+    for (let j = 0; j < NUM_COLS; j++) {
+      currentVacant.add(toId(i, j));
+    }
+  }
+  for (let id of currentSnake) {
+    currentVacant.delete(id);
+  }
+}
 
 // getFood will check if the food is in the snake, if it is, it will try again
 function getFood() {
@@ -37,7 +57,11 @@ function getFood() {
 }
 
 // get new food will check if the food is the same as the current food, if it is, it will try again
+// will return null if there are no more vacant spots
 function getNewFood() {
+  if (!currentVacant.size) {
+    return null;
+  }
   const attempt = getFood();
   if (attempt === currentFood) {
     return getNewFood();
@@ -47,32 +71,23 @@ function getNewFood() {
 
 function initCanvas() {
   const canvas = document.getElementById("canvas");
+  canvas.style.border = "1px solid black";
   for (let i = 0; i < NUM_ROWS; i++) {
     const row = document.createElement("div");
     row.style.display = "flex";
     row.style.justifyContent = "center";
     row.style.width = `${CELL * NUM_COLS}px`;
     row.style.height = `${CELL}px`;
-    row.style.border = "1px solid red";
     for (let j = 0; j < NUM_COLS; j++) {
       // add cells to the row
       const cell = document.createElement("div");
       cell.style.width = `${CELL}px`;
       cell.style.height = `${CELL}px`;
-      cell.style.border = "1px solid red";
       cell.id = `${i}-${j}`;
       row.appendChild(cell);
     }
     canvas.appendChild(row);
   }
-}
-
-function toId(...args) {
-  return args.join("-");
-}
-
-function fromId(id) {
-  return id.split("-").map((i) => parseInt(i));
 }
 
 function drawSnakeAndFood() {
@@ -91,9 +106,15 @@ function drawSnakeAndFood() {
         cell.style.background = "red";
         continue;
       }
-      cell.style.background = currentSnake.has(id) ? "green" : "white";
+      if (currentSnake.has(id)) {
+        cell.style.background = "green";
+        cell.style.borderRadius = "20%";
+      } else {
+        cell.style.background = "white";
+      }
     }
   }
+  updateVacant();
 }
 
 function isOpposite(dir1, dir2) {
@@ -147,8 +168,17 @@ function step() {
   // if it doesnt eat food, remove the tail
   if (nextId === currentFood) {
     currentFood = getNewFood();
+    if (currentFood === null) {
+      return gameOver();
+    }
     // update the score
     updateScore(++score);
+    // update the interval
+    if (interval > FASTEST_INTERVAL) {
+      interval -= INCREMENT;
+      clearInterval(intervalId);
+      startGameLoop();
+    }
   } else {
     // remove the tail
     currentSnake.delete([...currentSnake][0]);

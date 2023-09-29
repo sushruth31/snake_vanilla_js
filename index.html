@@ -1,19 +1,22 @@
-<div id="container">
-  <h1>Snake</h1>
-  <h2>Your Score: <span class="score"></span></h2>
-  <div id="btncontainer">
-    <button class="btn" id="pause">Pause</button>
-    <button class="btn" id="start">Start</button>
-  </div>
-  <div id="canvas"></div>
-  <div id="gameovermodal">
-    <div id="gameovermodalcontent">
-      <h1>Game Over</h1>
-      <p>Your score was: <span class="score"></span></p>
-      <button id="restart">Restart</button>
+<head></head>
+<body>
+  <div id="container">
+    <h1>Snake</h1>
+    <h2>Your Score: <span class="score"></span></h2>
+    <div id="btncontainer">
+      <button class="btn" id="pause">Pause</button>
+      <button class="btn" id="start">Start</button>
+    </div>
+    <div id="canvas"></div>
+    <div id="gameovermodal">
+      <div id="gameovermodalcontent">
+        <h1>Game Over</h1>
+        <p>Your score was: <span class="score"></span></p>
+        <button id="restart">Restart</button>
+      </div>
     </div>
   </div>
-</div>
+</body>
 <style>
   #btncontainer {
     display: flex;
@@ -61,4 +64,4 @@
     width: 100%;
   }
 </style>
-<script src="snake.js"></script>
+<script type="module" src="snake.js"></script>
