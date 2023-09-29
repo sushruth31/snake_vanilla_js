@@ -182,7 +182,6 @@ function step() {
     // update the interval
     if (interval > FASTEST_INTERVAL) {
       interval -= INCREMENT;
-      clearInterval(intervalId);
       startGameLoop();
     }
   } else {
@@ -204,9 +203,6 @@ function restartGame() {
   currentDir = moveRight;
   currentFood = getFood();
   interval = SLOWEST_INTERVAL;
-  if (intervalId) {
-    clearInterval(intervalId);
-  }
   score = 0;
   updateScore(score);
   drawSnakeAndFood();
@@ -215,6 +211,10 @@ function restartGame() {
 }
 
 function startGameLoop() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
   intervalId = setInterval(step, interval);
 }
 
@@ -230,14 +230,16 @@ function createHandlers() {
     if (intervalId) {
       clearInterval(intervalId);
       intervalId = null;
-    } else {
-      startGameLoop();
     }
   });
 
   // start btn handler
   const startBtn = document.getElementById("start");
   startBtn.addEventListener("click", () => {
+    if (intervalId) {
+      // dont do anything if the game is already running
+      return;
+    }
     window.addEventListener("keydown", handleKeydown);
     startGameLoop();
   });
@@ -275,9 +277,9 @@ function main() {
 
   updateScore(score);
 
-  //set up the game loop
-  startGameLoop();
+  //render snake and set up the game loop
   drawSnakeAndFood();
+  startGameLoop();
 }
 
 window.addEventListener("load", main);
