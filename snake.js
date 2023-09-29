@@ -5,8 +5,8 @@ import {
   moveDown,
   toId,
   fromId,
-  getTail,
   getHead,
+  getTail,
 } from "./utils.js";
 // constants
 const NUM_ROWS = 20;
@@ -16,7 +16,6 @@ const SLOWEST_INTERVAL = 400;
 const INCREMENT = 40;
 const CELL = 30;
 const INIT_IDS = [0, 1, 2].map((i) => `${0}-${i}`);
-const scoreTxt = document.getElementById("score");
 // map to store the cells so dom lookups are not needed on every draw
 const cellMap = new Map();
 const modal = document.getElementById("gameovermodal");
@@ -189,7 +188,7 @@ function step() {
     }
   } else {
     // remove the tail
-    currentSnake.delete([...currentSnake][0]);
+    currentSnake.delete(getTail(currentSnake));
   }
   drawSnakeAndFood();
 }
