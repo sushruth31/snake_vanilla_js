@@ -3,6 +3,7 @@ const NUM_ROWS = 20;
 const NUM_COLS = 20;
 const CELL = 30;
 const INIT_IDS = [0, 1, 2].map((i) => `${0}-${i}`);
+const scoreTxt = document.getElementById("score");
 
 // game state
 let intervalId = null;
@@ -12,15 +13,21 @@ let currentSnake = new Set(INIT_IDS);
 let interval = 400;
 let currentFood = getFood();
 
+// getFood will check if the food is in the snake, if it is, it will try again
 function getFood() {
-  return `${Math.floor(Math.random() * NUM_ROWS)}-${Math.floor(
+  const attempt = `${Math.floor(Math.random() * NUM_ROWS)}-${Math.floor(
     Math.random() * NUM_COLS
   )}`;
+  if (currentSnake.has(attempt)) {
+    return getFood();
+  }
+  return attempt;
 }
 
+// get new food will check if the food is the same as the current food, if it is, it will try again
 function getNewFood() {
   const attempt = getFood();
-  if (currentSnake.has(attempt) || attempt === currentFood) {
+  if (attempt === currentFood) {
     return getNewFood();
   }
   return attempt;
@@ -130,6 +137,8 @@ function step() {
   // if it doesnt eat food, remove the tail
   if (nextId === currentFood) {
     currentFood = getNewFood();
+    // update the score
+    updateScore(++score);
   } else {
     // remove the tail
     currentSnake.delete([...currentSnake][0]);
@@ -167,6 +176,8 @@ function restartGame() {
   currentSnake = new Set(INIT_IDS);
   currentDir = moveRight;
   currentFood = getFood();
+  score = 0;
+  updateScore(score);
   drawSnakeAndFood();
   startGameLoop();
 }
@@ -196,10 +207,19 @@ function createHandlers() {
   startBtn.addEventListener("click", startGameLoop);
 }
 
+function updateScore(val) {
+  const scoreEls = document.getElementsByClassName("score");
+  for (const scoreEl of scoreEls) {
+    scoreEl.innerHTML = val;
+  }
+}
+
 function main() {
   // create the board
   initCanvas();
   createHandlers();
+
+  updateScore(score);
 
   //set up the game loop
   startGameLoop();
