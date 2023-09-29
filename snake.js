@@ -4,6 +4,16 @@ const NUM_COLS = 20;
 const CELL = 30;
 const INIT_IDS = [0, 1, 2].map((i) => `${0}-${i}`);
 const scoreTxt = document.getElementById("score");
+// map to store the cells so dom lookups are not needed on every draw
+const cellMap = new Map();
+const modal = document.getElementById("gameovermodal");
+const scoreEls = document.getElementsByClassName("score");
+
+// direction fns
+const moveRight = ([row, col]) => [row, col + 1];
+const moveLeft = ([row, col]) => [row, col - 1];
+const moveUp = ([row, col]) => [row - 1, col];
+const moveDown = ([row, col]) => [row + 1, col];
 
 // game state
 let intervalId = null;
@@ -12,6 +22,8 @@ let score = 0;
 let currentSnake = new Set(INIT_IDS);
 let interval = 400;
 let currentFood = getFood();
+let currentDir = moveRight;
+const dirQueue = [moveRight];
 
 // getFood will check if the food is in the snake, if it is, it will try again
 function getFood() {
@@ -67,7 +79,13 @@ function drawSnakeAndFood() {
   for (let i = 0; i < NUM_ROWS; i++) {
     for (let j = 0; j < NUM_COLS; j++) {
       const id = toId(i, j);
-      const cell = document.getElementById(id);
+      let cell;
+      if (cellMap.has(id)) {
+        cell = cellMap.get(id);
+      } else {
+        cell = document.getElementById(id);
+        cellMap.set(id, cell);
+      }
       // add food
       if (id === currentFood) {
         cell.style.background = "red";
@@ -77,12 +95,6 @@ function drawSnakeAndFood() {
     }
   }
 }
-
-const moveRight = ([row, col]) => [row, col + 1];
-const moveLeft = ([row, col]) => [row, col - 1];
-const moveUp = ([row, col]) => [row - 1, col];
-const moveDown = ([row, col]) => [row + 1, col];
-const dirQueue = [moveRight];
 
 function isOpposite(dir1, dir2) {
   if (dir1 === moveRight && dir2 === moveLeft) {
@@ -102,8 +114,6 @@ function isOpposite(dir1, dir2) {
   }
   return false;
 }
-
-let currentDir = moveRight;
 
 function isOutOfBounds([row, col]) {
   return row < 0 || row >= NUM_ROWS || col < 0 || col >= NUM_COLS;
@@ -165,13 +175,11 @@ window.addEventListener("keydown", (e) => {
 });
 
 function gameOver() {
-  const modal = document.getElementById("gameovermodal");
   modal.style.display = "flex";
   clearInterval(intervalId);
 }
 
 function restartGame() {
-  const modal = document.getElementById("gameovermodal");
   modal.style.display = "none";
   currentSnake = new Set(INIT_IDS);
   currentDir = moveRight;
@@ -208,7 +216,6 @@ function createHandlers() {
 }
 
 function updateScore(val) {
-  const scoreEls = document.getElementsByClassName("score");
   for (const scoreEl of scoreEls) {
     scoreEl.innerHTML = val;
   }
