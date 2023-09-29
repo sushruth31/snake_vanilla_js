@@ -110,9 +110,8 @@ function drawSnakeAndFood() {
         cell.style.background = "green";
         cell.style.borderRadius = "20%";
         cell.style.transition = "background 0.2s";
-        // add eyes
-        const head = getHead(currentSnake);
         // add eyes to head
+        const head = getHead(currentSnake);
         const headCell = cellMap.get(head) ?? document.getElementById(head);
         headCell.style.background = "black";
         headCell.style.borderRadius = "50%";
@@ -193,27 +192,10 @@ function step() {
   drawSnakeAndFood();
 }
 
-window.addEventListener("keydown", (e) => {
-  switch (e.key) {
-    case "ArrowRight":
-      dirQueue.push(moveRight);
-      break;
-    case "ArrowLeft":
-      dirQueue.push(moveLeft);
-      break;
-    case "ArrowUp":
-      dirQueue.push(moveUp);
-      break;
-    case "ArrowDown":
-      console.log("down");
-      dirQueue.push(moveDown);
-      break;
-  }
-});
-
 function gameOver() {
   modal.style.display = "flex";
   clearInterval(intervalId);
+  window.removeEventListener("keydown", handleKeydown);
 }
 
 function restartGame() {
@@ -228,6 +210,7 @@ function restartGame() {
   score = 0;
   updateScore(score);
   drawSnakeAndFood();
+  createHandlers();
   startGameLoop();
 }
 
@@ -243,6 +226,7 @@ function createHandlers() {
   //pause btn handler
   const pauseBtn = document.getElementById("pause");
   pauseBtn.addEventListener("click", () => {
+    window.removeEventListener("keydown", handleKeydown);
     if (intervalId) {
       clearInterval(intervalId);
       intervalId = null;
@@ -253,7 +237,29 @@ function createHandlers() {
 
   // start btn handler
   const startBtn = document.getElementById("start");
-  startBtn.addEventListener("click", startGameLoop);
+  startBtn.addEventListener("click", () => {
+    window.addEventListener("keydown", handleKeydown);
+    startGameLoop();
+  });
+
+  window.addEventListener("keydown", handleKeydown);
+}
+
+function handleKeydown(e) {
+  switch (e.key) {
+    case "ArrowRight":
+      dirQueue.push(moveRight);
+      break;
+    case "ArrowLeft":
+      dirQueue.push(moveLeft);
+      break;
+    case "ArrowUp":
+      dirQueue.push(moveUp);
+      break;
+    case "ArrowDown":
+      dirQueue.push(moveDown);
+      break;
+  }
 }
 
 function updateScore(val) {
