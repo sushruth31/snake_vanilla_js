@@ -1,15 +1,37 @@
 <div id="container">
   <h1>Snake</h1>
+  <div id="btncontainer">
+    <button class="btn" id="pause">Pause</button>
+    <button class="btn" id="start">Start</button>
+  </div>
   <div id="canvas"></div>
   <div id="gameovermodal">
     <div id="gameovermodalcontent">
       <h1>Game Over</h1>
-      <p>Your score was <span id="score"></span></p>
+      <p>Your score was:<span id="score"></span></p>
       <button id="restart">Restart</button>
     </div>
   </div>
 </div>
 <style>
+  #btncontainer {
+    display: flex;
+    justify-content: center;
+    align-items: space-around;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .btn {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #4caf50;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
   #container {
     display: flex;
     justify-content: center;

@@ -1,12 +1,30 @@
+// constants
 const NUM_ROWS = 20;
 const NUM_COLS = 20;
 const CELL = 30;
-// snake type is a set of cell ids
-const initIds = [0, 1, 2].map((i) => `${0}-${i}`);
-let currentSnake = new Set(initIds);
+const INIT_IDS = [0, 1, 2].map((i) => `${0}-${i}`);
 
-const interval = 400;
+// game state
 let intervalId = null;
+let score = 0;
+// snake type is a set of cell ids
+let currentSnake = new Set(INIT_IDS);
+let interval = 400;
+let currentFood = getFood();
+
+function getFood() {
+  return `${Math.floor(Math.random() * NUM_ROWS)}-${Math.floor(
+    Math.random() * NUM_COLS
+  )}`;
+}
+
+function getNewFood() {
+  const attempt = getFood();
+  if (currentSnake.has(attempt) || attempt === currentFood) {
+    return getNewFood();
+  }
+  return attempt;
+}
 
 function initCanvas() {
   const canvas = document.getElementById("canvas");
@@ -38,12 +56,17 @@ function fromId(id) {
   return id.split("-").map((i) => parseInt(i));
 }
 
-function drawSnake(snake) {
+function drawSnakeAndFood() {
   for (let i = 0; i < NUM_ROWS; i++) {
     for (let j = 0; j < NUM_COLS; j++) {
       const id = toId(i, j);
       const cell = document.getElementById(id);
-      cell.style.background = snake.has(id) ? "green" : "white";
+      // add food
+      if (id === currentFood) {
+        cell.style.background = "red";
+        continue;
+      }
+      cell.style.background = currentSnake.has(id) ? "green" : "white";
     }
   }
 }
@@ -94,23 +117,25 @@ function step() {
   currentDir = nextDir;
   const head = [...currentSnake][currentSnake.size - 1];
   const nextHead = currentDir(fromId(head));
+  const nextId = toId(...nextHead);
   if (
     isOutOfBounds(nextHead) ||
     // check if the next head is in the snake
-    currentSnake.has(toId(...nextHead))
+    currentSnake.has(nextId)
   ) {
     return gameOver();
   }
-  updateSnake(currentSnake, nextHead);
-  drawSnake(currentSnake);
+  // add the head regardless of whether it eats food or not
+  currentSnake.add(nextId);
+  // if it doesnt eat food, remove the tail
+  if (nextId === currentFood) {
+    currentFood = getNewFood();
+  } else {
+    // remove the tail
+    currentSnake.delete([...currentSnake][0]);
+  }
+  drawSnakeAndFood();
 }
-
-function updateSnake(snake, nextHead) {
-  snake.add(toId(...nextHead));
-  snake.delete([...currentSnake][0]);
-}
-
-intervalId = setInterval(step, interval);
 
 window.addEventListener("keydown", (e) => {
   switch (e.key) {
@@ -130,10 +155,6 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-initCanvas();
-
-drawSnake(currentSnake);
-
 function gameOver() {
   const modal = document.getElementById("gameovermodal");
   modal.style.display = "flex";
@@ -143,11 +164,46 @@ function gameOver() {
 function restartGame() {
   const modal = document.getElementById("gameovermodal");
   modal.style.display = "none";
-  currentSnake = new Set(initIds);
+  currentSnake = new Set(INIT_IDS);
   currentDir = moveRight;
-  drawSnake(currentSnake);
+  currentFood = getFood();
+  drawSnakeAndFood();
+  startGameLoop();
+}
+
+function startGameLoop() {
   intervalId = setInterval(step, interval);
 }
 
-const restartBtn = document.getElementById("restart");
-restartBtn.addEventListener("click", restartGame);
+function createHandlers() {
+  // restart btn handler
+  const restartBtn = document.getElementById("restart");
+  restartBtn.addEventListener("click", restartGame);
+
+  //pause btn handler
+  const pauseBtn = document.getElementById("pause");
+  pauseBtn.addEventListener("click", () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    } else {
+      startGameLoop();
+    }
+  });
+
+  // start btn handler
+  const startBtn = document.getElementById("start");
+  startBtn.addEventListener("click", startGameLoop);
+}
+
+function main() {
+  // create the board
+  initCanvas();
+  createHandlers();
+
+  //set up the game loop
+  startGameLoop();
+  drawSnakeAndFood();
+}
+
+window.addEventListener("load", main);
