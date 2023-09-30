@@ -1,31 +1,4 @@
-import {
-  moveRight,
-  moveLeft,
-  moveUp,
-  moveDown,
-  toId,
-  fromId,
-  isOpposite,
-} from "./utils.js";
-// constants
-
-// updates the current vacant set
-// this is to set determine if there is an available spot for food
-
-function main() {
-  // create the board
-  const game = new Game();
-  game.initCanvas();
-  game.createHandlers();
-
-  game.updateScore();
-
-  //render snake and set up the game loop
-  game.drawSnakeAndFood();
-  game.startGameLoop();
-}
-
-window.addEventListener("load", main);
+import { toId, fromId, Direction } from "./utils.js";
 
 class Snake extends Set {
   constructor(ids) {
@@ -43,7 +16,7 @@ class Snake extends Set {
   }
 }
 
-class Game {
+export default class Game {
   NUM_ROWS = 20;
   INIT_IDS = [0, 1, 2].map((i) => `${0}-${i}`);
   NUM_COLS = 20;
@@ -56,6 +29,9 @@ class Game {
   modal = document.getElementById("gameovermodal");
   scoreEls = document.getElementsByClassName("score");
   canvas = document.getElementById("canvas");
+  restartBtn = document.getElementById("restart");
+  pauseBtn = document.getElementById("pause");
+  startBtn = document.getElementById("start");
 
   // game state
   intervalId = null;
@@ -64,9 +40,12 @@ class Game {
   currentSnake = new Snake(this.INIT_IDS);
   interval = this.SLOWEST_INTERVAL;
   currentFood = this.getFood();
-  currentDir = moveRight;
-  dirQueue = [moveRight];
+  currentDir = Direction.moveRight;
+  dirQueue = [Direction.moveRight];
   currentVacant = new Set();
+
+  // create a new handle keydown function so the reference to this is correct
+  handleKeydownRef = this.handleKeydown.bind(this);
 
   initCanvas() {
     for (let i = 0; i < this.NUM_ROWS; i++) {
@@ -87,40 +66,38 @@ class Game {
     }
   }
 
-  createHandlers() {
-    // restart btn handler
-    const restartBtn = document.getElementById("restart");
-    restartBtn.addEventListener("click", this.restartGame.bind(this));
-
-    //pause btn handler
-    const pauseBtn = document.getElementById("pause");
-    pauseBtn.addEventListener("click", () => {
-      window.removeEventListener("keydown", this.handleKeydown.bind(this));
-      if (this.intervalId) {
-        clearInterval(this.intervalId);
-        this.intervalId = null;
-      }
-    });
-
-    // start btn handler
-    const startBtn = document.getElementById("start");
-    startBtn.addEventListener("click", () => {
-      if (this.intervalId) {
-        // dont do anything if the game is already running
-        return;
-      }
-      window.addEventListener("keydown", this.handleKeydown.bind(this));
-      this.startGameLoop();
-    });
-
-    window.addEventListener("keydown", this.handleKeydown.bind(this));
-  }
-
-  startGameLoop() {
+  clearInterval() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
+  }
+
+  createHandlers() {
+    // restart btn handler
+    this.restartBtn.addEventListener("click", this.restartGame.bind(this));
+
+    //pause btn handler
+    this.pauseBtn.addEventListener("click", () => {
+      window.removeEventListener("keydown", this.handleKeydownRef);
+      this.clearInterval();
+    });
+
+    // start btn handler
+    this.startBtn.addEventListener("click", () => {
+      if (this.intervalId) {
+        // dont do anything if the game is already running
+        return;
+      }
+      window.addEventListener("keydown", this.handleKeydownRef);
+      this.startGameLoop();
+    });
+
+    window.addEventListener("keydown", this.handleKeydownRef);
+  }
+
+  startGameLoop() {
+    this.clearInterval();
     this.intervalId = setInterval(this.step.bind(this), this.interval);
   }
 
@@ -148,9 +125,10 @@ class Game {
     return attempt;
   }
 
-  updateScore(val = 0) {
+  updateScore() {
+    this.score = this.currentSnake.size - this.INIT_IDS.length;
     for (const scoreEl of this.scoreEls) {
-      scoreEl.innerHTML = val;
+      scoreEl.innerHTML = this.score;
     }
   }
 
@@ -188,12 +166,12 @@ class Game {
     this.updateVacant();
   }
 
-  step() {
+  setNextDir() {
     // get the direction from the queue
     let nextDir = this.currentDir;
     while (this.dirQueue.length > 0) {
       const potentialDir = this.dirQueue.shift();
-      if (isOpposite(potentialDir, this.currentDir)) {
+      if (Direction.isOpposite(potentialDir, this.currentDir)) {
         // continue to the next potential direction
         continue;
       }
@@ -201,6 +179,10 @@ class Game {
       break;
     }
     this.currentDir = nextDir;
+  }
+
+  step() {
+    this.setNextDir();
     const head = this.currentSnake.getHead();
     const nextHead = this.currentDir(fromId(head));
     const nextId = toId(...nextHead);
@@ -220,7 +202,7 @@ class Game {
         return this.gameOver();
       }
       // update the score
-      this.updateScore(++this.score);
+      this.updateScore();
       // update the interval
       if (this.interval > this.FASTEST_INTERVAL) {
         this.interval -= this.INCREMENT;
@@ -239,27 +221,29 @@ class Game {
 
   gameOver() {
     this.modal.style.display = "flex";
-    clearInterval(this.intervalId);
-    window.removeEventListener("keydown", this.handleKeydown.bind(this));
+    this.clearInterval();
+    window.removeEventListener("keydown", this.handleKeydownRef);
   }
 
   handleKeydown(e) {
     switch (e.key) {
       case "ArrowRight":
-        this.dirQueue.push(moveRight);
+        this.dirQueue.push(Direction.moveRight);
         break;
       case "ArrowLeft":
-        this.dirQueue.push(moveLeft);
+        this.dirQueue.push(Direction.moveLeft);
         break;
       case "ArrowUp":
-        this.dirQueue.push(moveUp);
+        this.dirQueue.push(Direction.moveUp);
         break;
       case "ArrowDown":
-        this.dirQueue.push(moveDown);
+        this.dirQueue.push(Direction.moveDown);
         break;
     }
   }
 
+  // updates the current vacant set
+  // this is to set determine if there is an available spot for food
   updateVacant() {
     this.currentVacant = new Set();
     for (let i = 0; i < this.NUM_ROWS; i++) {
@@ -275,11 +259,10 @@ class Game {
   restartGame() {
     this.modal.style.display = "none";
     this.currentSnake = new Snake(this.INIT_IDS);
-    this.currentDir = moveRight;
+    this.currentDir = Direction.moveRight;
     this.currentFood = this.getFood();
     this.interval = this.SLOWEST_INTERVAL;
-    this.score = 0;
-    this.updateScore(this.score);
+    this.updateScore();
     this.drawSnakeAndFood();
     this.createHandlers();
     this.startGameLoop();
