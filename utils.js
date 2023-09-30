@@ -12,10 +12,21 @@ export function fromId(id) {
   return id.split("-").map((i) => parseInt(i));
 }
 
-export function getTail(snake) {
-  return [...snake][0];
-}
-
-export function getHead(snake) {
-  return [...snake][snake.size - 1];
+export function isOpposite(dir1, dir2) {
+  if (dir1 === moveRight && dir2 === moveLeft) {
+    return true;
+  }
+  if (dir1 === moveLeft && dir2 === moveRight) {
+    return true;
+  }
+  if (dir1 === moveUp && dir2 === moveDown) {
+    return true;
+  }
+  if (dir1 === moveDown && dir2 === moveUp) {
+    return true;
+  }
+  if (dir1 === dir2) {
+    return true;
+  }
+  return false;
 }
