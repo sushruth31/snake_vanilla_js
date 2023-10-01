@@ -1,8 +1,17 @@
+import { NUM_COLS, NUM_ROWS } from "./index.js";
 import { toId, fromId, Direction } from "./utils.js";
 
 class Snake extends Set {
+  currentDir = Direction.moveRight;
   constructor(ids) {
     super(ids);
+  }
+  get direction() {
+    return this.currentDir;
+  }
+
+  set direction(dir) {
+    this.currentDir = dir;
   }
 
   getHead() {
@@ -14,12 +23,19 @@ class Snake extends Set {
   removeTail() {
     this.delete(this.getTail());
   }
+
+  getNextHead() {
+    return this.currentDir(fromId(this.getHead()));
+  }
+
+  isOutOfBounds() {
+    const [row, col] = this.getNextHead();
+    return row < 0 || row >= NUM_ROWS || col < 0 || col >= NUM_COLS;
+  }
 }
 
 export default class Game {
-  NUM_ROWS = 20;
   INIT_IDS = [0, 1, 2].map((i) => `${0}-${i}`);
-  NUM_COLS = 20;
   FASTEST_INTERVAL = 100;
   SLOWEST_INTERVAL = 400;
   INCREMENT = 40;
@@ -40,7 +56,6 @@ export default class Game {
   currentSnake = new Snake(this.INIT_IDS);
   interval = this.SLOWEST_INTERVAL;
   currentFood = this.getFood();
-  currentDir = Direction.moveRight;
   dirQueue = [Direction.moveRight];
   currentVacant = new Set();
 
@@ -48,13 +63,13 @@ export default class Game {
   handleKeydownRef = this.handleKeydown.bind(this);
 
   initCanvas() {
-    for (let i = 0; i < this.NUM_ROWS; i++) {
+    for (let i = 0; i < NUM_ROWS; i++) {
       const row = document.createElement("div");
       row.style.display = "flex";
       row.style.justifyContent = "center";
-      row.style.width = `${this.CELL * this.NUM_COLS}px`;
+      row.style.width = `${this.CELL * NUM_COLS}px`;
       row.style.height = `${this.CELL}px`;
-      for (let j = 0; j < this.NUM_COLS; j++) {
+      for (let j = 0; j < NUM_COLS; j++) {
         // add cells to the row
         const cell = document.createElement("div");
         cell.style.width = `${this.CELL}px`;
@@ -103,8 +118,8 @@ export default class Game {
 
   // getFood will check if the food is in the snake, if it is, it will try again
   getFood() {
-    const attempt = `${Math.floor(Math.random() * this.NUM_ROWS)}-${Math.floor(
-      Math.random() * this.NUM_COLS
+    const attempt = `${Math.floor(Math.random() * NUM_ROWS)}-${Math.floor(
+      Math.random() * NUM_COLS
     )}`;
     if (this.currentSnake.has(attempt)) {
       return this.getFood();
@@ -133,8 +148,8 @@ export default class Game {
   }
 
   drawSnakeAndFood() {
-    for (let i = 0; i < this.NUM_ROWS; i++) {
-      for (let j = 0; j < this.NUM_COLS; j++) {
+    for (let i = 0; i < NUM_ROWS; i++) {
+      for (let j = 0; j < NUM_COLS; j++) {
         const id = toId(i, j);
         let cell;
         if (this.cellMap.has(id)) {
@@ -168,26 +183,25 @@ export default class Game {
 
   setNextDir() {
     // get the direction from the queue
-    let nextDir = this.currentDir;
+    let nextDir = this.currentSnake.direction;
     while (this.dirQueue.length > 0) {
       const potentialDir = this.dirQueue.shift();
-      if (Direction.isOpposite(potentialDir, this.currentDir)) {
+      if (Direction.isOpposite(potentialDir, this.currentSnake.direction)) {
         // continue to the next potential direction
         continue;
       }
       nextDir = potentialDir;
       break;
     }
-    this.currentDir = nextDir;
+    this.currentSnake.direction = nextDir;
   }
 
   step() {
     this.setNextDir();
-    const head = this.currentSnake.getHead();
-    const nextHead = this.currentDir(fromId(head));
+    const nextHead = this.currentSnake.getNextHead();
     const nextId = toId(...nextHead);
     if (
-      this.isOutOfBounds(nextHead) ||
+      this.currentSnake.isOutOfBounds() ||
       // check if the next head is in the snake
       this.currentSnake.has(nextId)
     ) {
@@ -213,10 +227,6 @@ export default class Game {
       this.currentSnake.removeTail();
     }
     this.drawSnakeAndFood();
-  }
-
-  isOutOfBounds([row, col]) {
-    return row < 0 || row >= this.NUM_ROWS || col < 0 || col >= this.NUM_COLS;
   }
 
   gameOver() {
@@ -246,8 +256,8 @@ export default class Game {
   // this is to set determine if there is an available spot for food
   updateVacant() {
     this.currentVacant = new Set();
-    for (let i = 0; i < this.NUM_ROWS; i++) {
-      for (let j = 0; j < this.NUM_COLS; j++) {
+    for (let i = 0; i < NUM_ROWS; i++) {
+      for (let j = 0; j < NUM_COLS; j++) {
         this.currentVacant.add(toId(i, j));
       }
     }
@@ -259,7 +269,6 @@ export default class Game {
   restartGame() {
     this.modal.style.display = "none";
     this.currentSnake = new Snake(this.INIT_IDS);
-    this.currentDir = Direction.moveRight;
     this.currentFood = this.getFood();
     this.interval = this.SLOWEST_INTERVAL;
     this.updateScore();

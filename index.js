@@ -1,4 +1,6 @@
 import Game from "./snake.js";
+export const NUM_ROWS = 20;
+export const NUM_COLS = 20;
 
 function main() {
   // create the board
