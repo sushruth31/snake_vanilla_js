@@ -1,0 +1,17 @@
+{
+  "name": "snake-vanilla-js",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Snake in dependency-free vanilla JavaScript, with the rules in a pure, testable module.",
+  "license": "MIT",
+  "author": "Sushruth Chandrasekar",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/",
+    "check": "node --check src/direction.js && node --check src/game.js && node --check src/renderer.js && node --check src/main.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
